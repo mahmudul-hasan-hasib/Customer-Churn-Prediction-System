@@ -1,0 +1,23 @@
+@"
+# FRONTEND
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# BACKEND
+__pycache__/
+*.pyc
+venv/
+env/
+.venv/
+
+# ENV
+.env
+.env.local
+
+# SYSTEM
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+"@ | Out-File .gitignore -Encoding utf8
