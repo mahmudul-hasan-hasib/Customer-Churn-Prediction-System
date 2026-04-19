@@ -33,10 +33,43 @@ def get_recent_activity():
     return [
         {
             "id": customer.id,
-            "customer_name": customer.name,
-            "risk_level": customer.risk_level,
-            "probability": customer.churn_probability,
-            "updated_at": customer.updated_at,
+            "customer": customer.name,
+            "risk": customer.risk_level,
+            "action": "Prediction updated" if customer.churn_probability > 0 else "Customer record updated",
+            "time": customer.updated_at.strftime("%Y-%m-%d %H:%M"),
         }
         for customer in customers
+    ]
+
+
+def get_churn_trend_data():
+    # placeholder static for now
+    # later we can make it DB-driven from snapshots/history table
+    return [
+        {"month": "Jan", "churnRate": 15.2},
+        {"month": "Feb", "churnRate": 16.8},
+        {"month": "Mar", "churnRate": 14.5},
+        {"month": "Apr", "churnRate": 17.3},
+        {"month": "May", "churnRate": 19.1},
+        {"month": "Jun", "churnRate": 18.2},
+    ]
+
+
+def get_retention_performance():
+    return [
+        {
+            "contractType": "Monthly",
+            "retained": Customer.objects.filter(contract_length="Monthly", churn_prediction=False).count(),
+            "churned": Customer.objects.filter(contract_length="Monthly", churn_prediction=True).count(),
+        },
+        {
+            "contractType": "Quarterly",
+            "retained": Customer.objects.filter(contract_length="Quarterly", churn_prediction=False).count(),
+            "churned": Customer.objects.filter(contract_length="Quarterly", churn_prediction=True).count(),
+        },
+        {
+            "contractType": "Annual",
+            "retained": Customer.objects.filter(contract_length="Annual", churn_prediction=False).count(),
+            "churned": Customer.objects.filter(contract_length="Annual", churn_prediction=True).count(),
+        },
     ]
