@@ -1,23 +1,84 @@
-@"
-# FRONTEND
+# ======================
+
+# FRONTEND (React/Vite)
+
+# ======================
+
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/.env
+frontend/.env.*
 
-# BACKEND
-__pycache__/
-*.pyc
+# ======================
+
+# BACKEND (Django)
+
+# ======================
+
+**pycache**/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+
+# Virtual Environments
+
 venv/
 env/
 .venv/
 
-# ENV
-.env
-.env.local
+# ======================
 
-# SYSTEM
+# DJANGO SPECIFIC
+
+# ======================
+
+*.log
+local_settings.py
+
+# ======================
+
+# ML / DATA FILES
+
+# ======================
+
+*.pkl
+*.joblib
+*.h5
+*.csv
+*.xlsx
+
+# (optional — যদি dataset push না করতে চাও)
+
+datasets/
+data/
+
+# ======================
+
+# ENV FILES
+
+# ======================
+
+.env
+.env.*
+!.env.example
+
+# ======================
+
+# SYSTEM FILES
+
+# ======================
+
 .DS_Store
 Thumbs.db
+
+# ======================
+
+# IDE / EDITOR
+
+# ======================
+
 .vscode/
 .idea/
-"@ | Out-File .gitignore -Encoding utf8
