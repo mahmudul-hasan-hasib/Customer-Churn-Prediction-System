@@ -3,17 +3,23 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import Customer
-from .serializers import CustomerSerializer, CustomerDetailSerializer
+from .serializers import (
+    CustomerListSerializer,
+    CustomerDetailSerializer,
+    CustomerCreateUpdateSerializer,
+)
 from apps.predictions.services import predict_churn
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
-    queryset = Customer.objects.all()
+    queryset = Customer.objects.all().order_by("-created_at")
 
     def get_serializer_class(self):
-        if self.action in ["retrieve"]:
+        if self.action == "list":
+            return CustomerListSerializer
+        if self.action == "retrieve":
             return CustomerDetailSerializer
-        return CustomerSerializer
+        return CustomerCreateUpdateSerializer
 
     def get_queryset(self):
         queryset = Customer.objects.all().order_by("-created_at")
@@ -55,15 +61,9 @@ class CustomerViewSet(viewsets.ModelViewSet):
         customer.churn_prediction = bool(result["prediction"])
         customer.churn_probability = result["probability"]
         customer.risk_level = result["risk_level"]
+        customer.prediction_confidence = 94.0
+        customer.model_version = "v2.1.0"
         customer.save()
 
-        return Response(
-            {
-                "id": customer.id,
-                "name": customer.name,
-                "prediction": customer.churn_prediction,
-                "probability": customer.churn_probability,
-                "risk_level": customer.risk_level,
-            },
-            status=status.HTTP_200_OK,
-        )
+        serializer = CustomerDetailSerializer(customer)
+        return Response(serializer.data, status=status.HTTP_200_OK)

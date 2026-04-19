@@ -11,6 +11,11 @@ class ChurnPipeline:
 
     @classmethod
     def load(cls):
+        if not PIPELINE_PATH.exists():
+            raise FileNotFoundError(
+                f"Pipeline file not found at: {PIPELINE_PATH}"
+            )
+
         if cls._pipeline is None:
             cls._pipeline = joblib.load(PIPELINE_PATH)
         return cls._pipeline
