@@ -24,9 +24,9 @@ class CustomerViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Customer.objects.all().order_by("-created_at")
 
-        search = self.request.query_params.get("search")
-        risk = self.request.query_params.get("risk")
-        contract = self.request.query_params.get("contract")
+        search = self.request.query_params.get("search", "").strip()
+        risk = self.request.query_params.get("risk", "").strip()
+        contract = self.request.query_params.get("contract", "").strip()
 
         if search:
             queryset = queryset.filter(name__icontains=search)

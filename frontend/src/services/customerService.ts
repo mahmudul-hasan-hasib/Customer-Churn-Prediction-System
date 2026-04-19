@@ -1,26 +1,29 @@
 import apiClient from "./apiClient";
 
-export interface CustomerPayload {
+export interface CustomerListItem {
+  id: number;
+  customer_code: string;
   name: string;
   email?: string;
-  age: number;
-  gender: "Female" | "Male";
   tenure: number;
-  usage_frequency: number;
-  support_calls: number;
-  payment_delay: number;
-  subscription_type: "Standard" | "Basic" | "Premium";
+  monthly_charges: number;
   contract_length: "Annual" | "Monthly" | "Quarterly";
-  total_spend: number;
-  last_interaction: number;
+  churn_prediction: boolean;
+  churn_probability: number;
+  risk_level: "low" | "medium" | "high";
+  updated_at: string;
 }
 
-export const getCustomers = async (params?: {
+export interface CustomerListParams {
   search?: string;
   risk?: string;
   contract?: string;
-}) => {
-  const response = await apiClient.get("/customers/", { params });
+}
+
+export const getCustomers = async (params?: CustomerListParams) => {
+  const response = await apiClient.get<CustomerListItem[]>("/customers/", {
+    params,
+  });
   return response.data;
 };
 
@@ -29,25 +32,22 @@ export const getCustomerById = async (id: number | string) => {
   return response.data;
 };
 
-export const createCustomer = async (payload: CustomerPayload) => {
+export const predictCustomer = async (id: number | string) => {
+  const response = await apiClient.post(`/customers/${id}/predict/`);
+  return response.data;
+};
+
+export const createCustomer = async (payload: any) => {
   const response = await apiClient.post("/customers/", payload);
   return response.data;
 };
 
-export const updateCustomer = async (
-  id: number | string,
-  payload: Partial<CustomerPayload>
-) => {
+export const updateCustomer = async (id: number | string, payload: any) => {
   const response = await apiClient.patch(`/customers/${id}/`, payload);
   return response.data;
 };
 
 export const deleteCustomer = async (id: number | string) => {
   const response = await apiClient.delete(`/customers/${id}/`);
-  return response.data;
-};
-
-export const predictCustomer = async (id: number | string) => {
-  const response = await apiClient.post(`/customers/${id}/predict/`);
   return response.data;
 };
