@@ -1,23 +1,22 @@
-from pathlib import Path
 import joblib
-
-
-BASE_DIR = Path(__file__).resolve().parent
-PIPELINE_PATH = BASE_DIR / "model_artifacts" / "churn_pipeline.pkl"
+from apps.ml_models.models import TrainedModel
 
 
 class ChurnPipeline:
     _pipeline = None
+    _active_model_id = None
 
     @classmethod
     def load(cls):
-        if not PIPELINE_PATH.exists():
-            raise FileNotFoundError(
-                f"Pipeline file not found at: {PIPELINE_PATH}"
-            )
+        active_model = TrainedModel.objects.filter(is_active=True, status="ready").first()
 
-        if cls._pipeline is None:
-            cls._pipeline = joblib.load(PIPELINE_PATH)
+        if not active_model:
+            raise FileNotFoundError("No active trained model found.")
+
+        if cls._pipeline is None or cls._active_model_id != active_model.id:
+            cls._pipeline = joblib.load(active_model.model_file.path)
+            cls._active_model_id = active_model.id
+
         return cls._pipeline
 
     @classmethod

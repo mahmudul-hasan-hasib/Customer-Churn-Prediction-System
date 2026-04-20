@@ -32,6 +32,9 @@ INSTALLED_APPS = [
     "apps.predictions",
     "apps.customers",
     "apps.dashboard",
+    "apps.analytics",
+    "apps.datasets",
+    "apps.ml_models",
 ]
 
 # ======================

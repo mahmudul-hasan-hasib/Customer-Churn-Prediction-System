@@ -18,10 +18,19 @@ export interface CustomerListParams {
   search?: string;
   risk?: string;
   contract?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface PaginatedCustomerResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: CustomerListItem[];
 }
 
 export const getCustomers = async (params?: CustomerListParams) => {
-  const response = await apiClient.get<CustomerListItem[]>("/customers/", {
+  const response = await apiClient.get<PaginatedCustomerResponse>("/customers/", {
     params,
   });
   return response.data;

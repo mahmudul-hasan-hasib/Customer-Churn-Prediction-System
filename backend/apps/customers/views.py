@@ -9,10 +9,12 @@ from .serializers import (
     CustomerCreateUpdateSerializer,
 )
 from apps.predictions.services import predict_churn
+from common.pagination import CustomerPagination
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all().order_by("-created_at")
+    pagination_class = CustomerPagination
 
     def get_serializer_class(self):
         if self.action == "list":

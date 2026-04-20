@@ -35,6 +35,12 @@ export function CustomerList() {
   const [predictingId, setPredictingId] = useState<number | null>(null);
   const [error, setError] = useState("");
 
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -42,7 +48,7 @@ export function CustomerList() {
     risk: "",
   });
 
-  const loadCustomers = async () => {
+  const loadCustomers = async (targetPage = page) => {
     try {
       setLoading(true);
       setError("");
@@ -51,9 +57,15 @@ export function CustomerList() {
         search: searchQuery || undefined,
         risk: filters.risk || undefined,
         contract: filters.contract || undefined,
+        page: targetPage,
+        page_size: pageSize,
       });
 
-      setCustomers(data);
+      setCustomers(data.results);
+      setTotalCount(data.count);
+      setHasNext(!!data.next);
+      setHasPrevious(!!data.previous);
+      setPage(targetPage);
     } catch (err: any) {
       setError("Failed to load customers.");
     } finally {
@@ -62,11 +74,11 @@ export function CustomerList() {
   };
 
   useEffect(() => {
-    loadCustomers();
+    loadCustomers(1);
   }, []);
 
   const handleApplyFilters = async () => {
-    await loadCustomers();
+    await loadCustomers(1);
   };
 
   const handleResetFilters = async () => {
@@ -76,14 +88,18 @@ export function CustomerList() {
       risk: "",
     });
 
-    try {
-      setLoading(true);
-      const data = await getCustomers();
-      setCustomers(data);
-    } catch (err) {
-      setError("Failed to reset filters.");
-    } finally {
-      setLoading(false);
+    await loadCustomers(1);
+  };
+
+  const handlePreviousPage = async () => {
+    if (hasPrevious) {
+      await loadCustomers(page - 1);
+    }
+  };
+
+  const handleNextPage = async () => {
+    if (hasNext) {
+      await loadCustomers(page + 1);
     }
   };
 
@@ -118,9 +134,13 @@ export function CustomerList() {
   };
 
   const customerCountText = useMemo(() => {
-    if (customers.length === 0) return "No customers found";
-    return `Showing 1-${customers.length} of ${customers.length} customers`;
-  }, [customers]);
+    const startItem = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+    const endItem = Math.min(page * pageSize, totalCount);
+
+    return totalCount === 0
+      ? "No customers found"
+      : `Showing ${startItem}-${endItem} of ${totalCount} customers`;
+  }, [totalCount, page, pageSize]);
 
   return (
     <div className="p-6 space-y-6">
@@ -143,7 +163,6 @@ export function CustomerList() {
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -152,7 +171,7 @@ export function CustomerList() {
                   placeholder="Search customers by name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
                 />
               </div>
             </div>
@@ -167,7 +186,6 @@ export function CustomerList() {
             </Button>
           </div>
 
-          {/* Advanced Filters */}
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-200">
               <Select
@@ -208,11 +226,11 @@ export function CustomerList() {
         </CardContent>
       </Card>
 
-      {/* Customer Table */}
+      {/* Table */}
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-6 text-sm text-gray-600">Loading customers...</div>
+            <div className="p-6 text-sm text-gray-600">Loading...</div>
           ) : customers.length === 0 ? (
             <div className="p-6 text-sm text-gray-600">No customers found.</div>
           ) : (
@@ -222,8 +240,8 @@ export function CustomerList() {
                   <TableHead>Name</TableHead>
                   <TableHead>Tenure</TableHead>
                   <TableHead>Monthly Charges</TableHead>
-                  <TableHead>Contract Type</TableHead>
-                  <TableHead>Churn Risk</TableHead>
+                  <TableHead>Contract</TableHead>
+                  <TableHead>Risk</TableHead>
                   <TableHead>Probability</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -237,68 +255,20 @@ export function CustomerList() {
 
                   return (
                     <TableRow key={customer.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex flex-col">
-                          <span>{customer.name}</span>
-                          <span className="text-xs text-gray-500">
-                            #{customer.customer_code}
-                          </span>
-                        </div>
-                      </TableCell>
-
-                      <TableCell>{customer.tenure} months</TableCell>
-
+                      <TableCell>{customer.name}</TableCell>
+                      <TableCell>{customer.tenure}</TableCell>
                       <TableCell>${customer.monthly_charges}</TableCell>
-
                       <TableCell>{customer.contract_length}</TableCell>
-
                       <TableCell>
                         <Badge variant={customer.risk_level}>
-                          {customer.risk_level.charAt(0).toUpperCase() +
-                            customer.risk_level.slice(1)}
+                          {customer.risk_level}
                         </Badge>
                       </TableCell>
-
+                      <TableCell>{probabilityPercent}%</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-[100px]">
-                            <div
-                              className={`h-2 rounded-full ${
-                                customer.risk_level === "high"
-                                  ? "bg-red-500"
-                                  : customer.risk_level === "medium"
-                                  ? "bg-yellow-500"
-                                  : "bg-green-500"
-                              }`}
-                              style={{ width: `${probabilityPercent}%` }}
-                            />
-                          </div>
-                          <span className="text-sm text-gray-600 w-10">
-                            {probabilityPercent}%
-                          </span>
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Link to={`/customers/${customer.id}`}>
-                            <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors">
-                              <Eye className="w-4 h-4" />
-                            </button>
-                          </Link>
-
-                          <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors">
-                            <Edit className="w-4 h-4" />
-                          </button>
-
-                          <button
-                            onClick={() => handlePredictCustomer(customer.id)}
-                            disabled={predictingId === customer.id}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors disabled:opacity-50"
-                          >
-                            <TrendingUp className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <button onClick={() => handlePredictCustomer(customer.id)}>
+                          Predict
+                        </button>
                       </TableCell>
                     </TableRow>
                   );
@@ -309,15 +279,31 @@ export function CustomerList() {
         </CardContent>
       </Card>
 
-      {/* Pagination UI placeholder */}
+      {/* Pagination */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-600">{customerCountText}</p>
+
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" disabled>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handlePreviousPage}
+            disabled={!hasPrevious || loading}
+          >
             <ChevronLeft className="w-4 h-4 mr-1" />
             Previous
           </Button>
-          <Button variant="secondary" size="sm" disabled>
+
+          <div className="px-3 py-2 text-sm text-gray-600">
+            Page {page}
+          </div>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleNextPage}
+            disabled={!hasNext || loading}
+          >
             Next
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>

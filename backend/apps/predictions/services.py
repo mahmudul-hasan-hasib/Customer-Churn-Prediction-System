@@ -30,8 +30,23 @@ def preprocess_input(data: dict) -> pd.DataFrame:
     training_columns = ChurnPipeline.get_features()
 
     df = build_input_dataframe(data)
-    df = pd.get_dummies(df)
-    df = df.reindex(columns=training_columns, fill_value=0)
+
+    # EXACT SAME encoding
+    df = pd.get_dummies(
+        df,
+        columns=["Gender", "Subscription Type", "Contract Length"],
+        drop_first=True
+    )
+
+    # 🔥 CRITICAL: align columns
+    for col in training_columns:
+        if col not in df.columns:
+            df[col] = 0
+
+    df = df[training_columns]   # exact order
+
+    # debug
+    print("FINAL SUM:", df.sum(axis=1).values)
 
     scaled = scaler.transform(df)
     return pd.DataFrame(scaled, columns=training_columns)
