@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-this-later")
 
-DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",
@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     "apps.customers",
     "apps.dashboard",
     "apps.analytics",
-    "apps.datasets",
+    "apps.datahub",
     "apps.ml_models",
 ]
 
@@ -143,15 +143,36 @@ MEDIA_ROOT = BASE_DIR / "media"
 # CORS SETTINGS
 # ======================
 
-CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "False").lower() == "true"
+CORS_ALLOW_ALL_ORIGINS = False
 
-cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+# production frontend থাকলে env থেকে extra origin add হবে
+extra_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+if extra_cors_origins:
+    CORS_ALLOWED_ORIGINS += [
+        origin.strip()
+        for origin in extra_cors_origins.split(",")
+        if origin.strip()
+    ]
 
 CORS_ALLOW_CREDENTIALS = True
 
-csrf_origins = os.getenv("CSRF_TRUSTED_ORIGINS", "")
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins.split(",") if origin.strip()]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+extra_csrf_origins = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+if extra_csrf_origins:
+    CSRF_TRUSTED_ORIGINS += [
+        origin.strip()
+        for origin in extra_csrf_origins.split(",")
+        if origin.strip()
+    ]
 
 # ======================
 # DJANGO REST FRAMEWORK

@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 from .models import TrainedModel
 from .serializers import TrainedModelSerializer
-from apps.datasets.models import DatasetUpload
+from apps.datahub.models import DatasetUpload
 from apps.predictions.ml.training import train_model_from_dataset
 
 

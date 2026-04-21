@@ -12,7 +12,7 @@ export interface DatasetItem {
 }
 
 export const getDatasets = async () => {
-  const response = await apiClient.get<DatasetItem[]>("/datasets/");
+  const response = await apiClient.get<DatasetItem[]>("/datahub/");
   return response.data;
 };
 
@@ -21,7 +21,7 @@ export const uploadDataset = async (file: File, name?: string) => {
   formData.append("file", file);
   formData.append("name", name || file.name);
 
-  const response = await apiClient.post("/datasets/", formData, {
+  const response = await apiClient.post("/datahub/", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

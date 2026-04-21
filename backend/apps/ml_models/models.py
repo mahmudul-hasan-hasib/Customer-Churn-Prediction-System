@@ -1,5 +1,5 @@
 from django.db import models
-from apps.datasets.models import DatasetUpload
+from apps.datahub.models import DatasetUpload
 
 
 class TrainedModel(models.Model):

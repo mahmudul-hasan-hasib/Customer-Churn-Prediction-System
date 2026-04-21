@@ -18,7 +18,7 @@ urlpatterns = [
     path("api/customers/", include("apps.customers.urls")),
     path("api/dashboard/", include("apps.dashboard.urls")),
     path("api/analytics/", include("apps.analytics.urls")),
-    path("api/datasets/", include("apps.datasets.urls")),
+    path("api/datahub/", include("apps.datahub.urls")),
     path("api/ml-models/", include("apps.ml_models.urls")),
 ]
 
