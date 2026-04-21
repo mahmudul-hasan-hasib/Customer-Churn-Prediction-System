@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     "apps.dashboard",
     "apps.analytics",
     "apps.datahub",
-    "apps.datasets",
     "apps.ml_models",
 ]
 
