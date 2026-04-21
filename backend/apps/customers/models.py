@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.crypto import get_random_string
 
 
 class Customer(models.Model):
@@ -39,11 +40,11 @@ class Customer(models.Model):
     ]
 
     customer_code = models.CharField(
-    max_length=50,
-    unique=True,
-    null=True,
-    blank=True
-)
+        max_length=50,
+        unique=True,
+        blank=True,
+    )
+
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True, blank=True, null=True)
     phone = models.CharField(max_length=30, blank=True, null=True)
@@ -91,6 +92,15 @@ class Customer(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        if not self.customer_code:
+            while True:
+                code = f"CUS-{get_random_string(6).upper()}"
+                if not Customer.objects.filter(customer_code=code).exists():
+                    self.customer_code = code
+                    break
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.customer_code})"

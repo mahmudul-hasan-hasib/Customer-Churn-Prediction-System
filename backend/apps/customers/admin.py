@@ -22,7 +22,6 @@ class CustomerAdmin(admin.ModelAdmin):
         "tenure",
         "contract_length",
         "monthly_charges",
-        "churn_probability",
         "risk_level",
         "created_at",
     )
