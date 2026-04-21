@@ -16,19 +16,22 @@ class PredictChurnAPIView(APIView):
             return Response(result, status=status.HTTP_200_OK)
 
         except FileNotFoundError as e:
+            print("Prediction FileNotFoundError:", str(e))
             return Response(
                 {
-                    "detail": "Prediction pipeline file is missing.",
+                    "detail": "Prediction pipeline/model file is missing.",
                     "error": str(e),
                 },
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
         except Exception as e:
+            print("Prediction Exception:", repr(e))
             return Response(
                 {
                     "detail": "Prediction failed.",
                     "error": str(e),
+                    "exception_type": e.__class__.__name__,
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

@@ -8,4 +8,4 @@ export const getAdminOverview = async () => {
 export const getModelMetrics = async () => {
   const res = await apiClient.get("/analytics/model-metrics/");
   return res.data;
-};  
+};

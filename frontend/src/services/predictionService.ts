@@ -22,6 +22,10 @@ export interface PredictionResponse {
 export const predictChurn = async (
   payload: PredictionPayload
 ): Promise<PredictionResponse> => {
+  console.log("Prediction payload:", payload);
+
   const response = await apiClient.post("/predictions/predict/", payload);
+
+  console.log("Prediction API response:", response.data);
   return response.data;
 };

@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -6,17 +7,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # BASIC SETTINGS
 # ======================
 
-SECRET_KEY = "django-insecure-change-this-later"
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-this-later")
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 # ======================
 # APPLICATIONS
 # ======================
 
 INSTALLED_APPS = [
+  "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -113,18 +115,18 @@ USE_TZ = True
 # ======================
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # ======================
 # CORS SETTINGS (VERY IMPORTANT)
 # ======================
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "False").lower() == "true"
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 CORS_ALLOW_CREDENTIALS = True
 
 # React Vite dev server
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-]
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "http://localhost:5173").split(",")
 
 # ======================
 # DJANGO REST FRAMEWORK

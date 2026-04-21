@@ -39,23 +39,32 @@ export function Prediction() {
   };
 
   const handlePredict = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      setResult(null);
+  try {
+    setLoading(true);
+    setError("");
+    setResult(null);
 
-      const res = await predictChurn(formData);
-      setResult(res);
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.detail ||
-          err?.response?.data?.error ||
-          "Prediction failed. Please check backend and pipeline file."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    const res = await predictChurn(formData);
+    console.log("Prediction success:", res);
+    setResult(res);
+  } catch (err: any) {
+    console.error("Prediction error full object:", err);
+    console.error("Prediction error response:", err?.response);
+    console.error("Prediction error response data:", err?.response?.data);
+
+    const backendDetail =
+      err?.response?.data?.detail ||
+      err?.response?.data?.error ||
+      err?.response?.data?.message ||
+      JSON.stringify(err?.response?.data) ||
+      err?.message ||
+      "Prediction failed.";
+
+    setError(backendDetail);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const riskBadgeVariant = result?.risk_level || "low";
 

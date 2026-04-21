@@ -27,5 +27,8 @@ class TrainedModel(models.Model):
     trained_at = models.DateTimeField(auto_now_add=True)
     error_message = models.TextField(blank=True, null=True)
 
+    class Meta:
+        ordering = ["-trained_at"]
+
     def __str__(self):
         return self.version

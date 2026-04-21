@@ -30,31 +30,26 @@ def preprocess_input(data: dict) -> pd.DataFrame:
     training_columns = ChurnPipeline.get_features()
 
     df = build_input_dataframe(data)
+    print("raw input df columns:", list(df.columns))
 
-    # EXACT SAME encoding
-    df = pd.get_dummies(
-        df,
-        columns=["Gender", "Subscription Type", "Contract Length"],
-        drop_first=True
-    )
+    df = pd.get_dummies(df)
+    print("after get_dummies columns:", list(df.columns))
 
-    # 🔥 CRITICAL: align columns
-    for col in training_columns:
-        if col not in df.columns:
-            df[col] = 0
-
-    df = df[training_columns]   # exact order
-
-    # debug
-    print("FINAL SUM:", df.sum(axis=1).values)
+    df = df.reindex(columns=training_columns, fill_value=0)
+    print("after reindex shape:", df.shape)
 
     scaled = scaler.transform(df)
     return pd.DataFrame(scaled, columns=training_columns)
 
 
 def predict_churn(data: dict) -> dict:
+    print("predict_churn input:", data)
+
     model = ChurnPipeline.get_model()
     processed_df = preprocess_input(data)
+
+    print("processed_df columns:", list(processed_df.columns))
+    print("processed_df shape:", processed_df.shape)
 
     prediction = int(model.predict(processed_df)[0])
     probability = float(model.predict_proba(processed_df)[0][1])
