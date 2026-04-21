@@ -1,18 +1,45 @@
+import {
+  AlertCircle,
+  ArrowDownRight,
+  ArrowUpRight,
+  CheckCircle,
+  Plus,
+  TrendingDown,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
-  Users,
-  TrendingDown,
-  AlertCircle,
-  CheckCircle,
-  Plus,
-  TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
-import { Button } from "../components/ui/Button";
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  getDashboardChurnTrend,
+  getDashboardRecentActivity,
+  getDashboardRetentionPerformance,
+  getDashboardSegmentation,
+  getDashboardSummary,
+  type DashboardSummary,
+  type SegmentationItem,
+  type ChurnTrendItem,
+  type RetentionPerformanceItem,
+  type RecentActivityItem,
+} from "../../services/dashboardService";
 import { Badge } from "../components/ui/Badge";
+import { Button } from "../components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
 import {
   Table,
   TableBody,
@@ -21,50 +48,22 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/Table";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import {
-  getDashboardSummary,
-  getDashboardSegmentation,
-  getDashboardRecentActivity,
-  getDashboardChurnTrend,
-  getDashboardRetentionPerformance,
-} from "../../services/dashboardService";
 
 const PIE_COLORS = ["#10B981", "#F59E0B", "#EF4444"];
 
+const DEFAULT_SUMMARY: DashboardSummary = {
+  total_customers: 0,
+  churn_rate: 0,
+  at_risk: 0,
+  retained: 0,
+};
+
 export function Dashboard() {
-  const [summary, setSummary] = useState({
-    total_customers: 0,
-    churn_rate: 0,
-    at_risk: 0,
-    retained: 0,
-  });
-  const [segmentationData, setSegmentationData] = useState<
-    { name: string; value: number }[]
-  >([]);
-  const [churnTrendData, setChurnTrendData] = useState<
-    { month: string; churnRate: number }[]
-  >([]);
-  const [retentionData, setRetentionData] = useState<
-    { contractType: string; retained: number; churned: number }[]
-  >([]);
-  const [recentActivity, setRecentActivity] = useState<
-    { id: number; customer: string; risk: "low" | "medium" | "high"; action: string; time: string }[]
-  >([]);
+  const [summary, setSummary] = useState<DashboardSummary>(DEFAULT_SUMMARY);
+  const [segmentationData, setSegmentationData] = useState<SegmentationItem[]>([]);
+  const [churnTrendData, setChurnTrendData] = useState<ChurnTrendItem[]>([]);
+  const [retentionData, setRetentionData] = useState<RetentionPerformanceItem[]>([]);
+  const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -82,13 +81,25 @@ export function Dashboard() {
           getDashboardRetentionPerformance(),
         ]);
 
-      setSummary(summaryRes);
-      setSegmentationData(segmentationRes);
-      setRecentActivity(recentRes);
-      setChurnTrendData(trendRes);
-      setRetentionData(retentionRes);
+      console.log("summaryRes:", summaryRes);
+      console.log("segmentationRes:", segmentationRes, "isArray:", Array.isArray(segmentationRes));
+      console.log("recentRes:", recentRes, "isArray:", Array.isArray(recentRes));
+      console.log("trendRes:", trendRes, "isArray:", Array.isArray(trendRes));
+      console.log("retentionRes:", retentionRes, "isArray:", Array.isArray(retentionRes));
+
+      setSummary(summaryRes ?? DEFAULT_SUMMARY);
+      setSegmentationData(Array.isArray(segmentationRes) ? segmentationRes : []);
+      setRecentActivity(Array.isArray(recentRes) ? recentRes : []);
+      setChurnTrendData(Array.isArray(trendRes) ? trendRes : []);
+      setRetentionData(Array.isArray(retentionRes) ? retentionRes : []);
     } catch (err) {
+      console.error("Dashboard load error:", err);
       setError("Failed to load dashboard data.");
+      setSummary(DEFAULT_SUMMARY);
+      setSegmentationData([]);
+      setRecentActivity([]);
+      setChurnTrendData([]);
+      setRetentionData([]);
     } finally {
       setLoading(false);
     }
@@ -98,11 +109,16 @@ export function Dashboard() {
     loadDashboardData();
   }, []);
 
+  const safeSegmentationData = Array.isArray(segmentationData) ? segmentationData : [];
+  const safeChurnTrendData = Array.isArray(churnTrendData) ? churnTrendData : [];
+  const safeRetentionData = Array.isArray(retentionData) ? retentionData : [];
+  const safeRecentActivity = Array.isArray(recentActivity) ? recentActivity : [];
+
   const kpis = useMemo(
     () => [
       {
         title: "Total Customers",
-        value: summary.total_customers.toLocaleString(),
+        value: (summary.total_customers ?? 0).toLocaleString(),
         change: "+12.5%",
         trend: "up",
         icon: Users,
@@ -110,7 +126,7 @@ export function Dashboard() {
       },
       {
         title: "Churn Rate",
-        value: `${summary.churn_rate}%`,
+        value: `${summary.churn_rate ?? 0}%`,
         change: "-2.3%",
         trend: "down",
         icon: TrendingDown,
@@ -118,7 +134,7 @@ export function Dashboard() {
       },
       {
         title: "At-Risk Customers",
-        value: summary.at_risk.toLocaleString(),
+        value: (summary.at_risk ?? 0).toLocaleString(),
         change: "+5.2%",
         trend: "up",
         icon: AlertCircle,
@@ -126,7 +142,7 @@ export function Dashboard() {
       },
       {
         title: "Retained Customers",
-        value: summary.retained.toLocaleString(),
+        value: (summary.retained ?? 0).toLocaleString(),
         change: "+8.1%",
         trend: "up",
         icon: CheckCircle,
@@ -171,6 +187,7 @@ export function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {kpis.map((kpi) => {
           const Icon = kpi.icon;
+
           return (
             <Card key={kpi.title} hover>
               <CardContent className="p-6">
@@ -244,10 +261,21 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={churnTrendData}>
+              <LineChart data={safeChurnTrendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-                <XAxis dataKey="month" stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
+                <XAxis
+                  dataKey="month"
+                  stroke="#94A3B8"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="#94A3B8"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
                 <Tooltip />
                 <Line
                   type="monotone"
@@ -270,16 +298,20 @@ export function Dashboard() {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={segmentationData}
+                  data={safeSegmentationData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
                   outerRadius={100}
                   paddingAngle={3}
                   dataKey="value"
+                  nameKey="name"
                 >
-                  {segmentationData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  {safeSegmentationData.map((_, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={PIE_COLORS[index % PIE_COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -296,10 +328,21 @@ export function Dashboard() {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={retentionData}>
+            <BarChart data={safeRetentionData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-              <XAxis dataKey="contractType" stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
+              <XAxis
+                dataKey="contractType"
+                stroke="#94A3B8"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                stroke="#94A3B8"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
               <Tooltip />
               <Legend wrapperStyle={{ fontSize: "13px" }} />
               <Bar dataKey="retained" fill="#10B981" radius={[6, 6, 0, 0]} />
@@ -325,7 +368,7 @@ export function Dashboard() {
         <CardContent className="p-0">
           {loading ? (
             <div className="p-6 text-sm text-slate-600">Loading dashboard...</div>
-          ) : recentActivity.length === 0 ? (
+          ) : safeRecentActivity.length === 0 ? (
             <div className="p-6 text-sm text-slate-600">No recent activity found.</div>
           ) : (
             <Table>
@@ -338,7 +381,7 @@ export function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentActivity.map((activity) => (
+                {safeRecentActivity.map((activity) => (
                   <TableRow key={activity.id}>
                     <TableCell className="font-medium">{activity.customer}</TableCell>
                     <TableCell>
