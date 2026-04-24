@@ -1,7 +1,12 @@
 import pandas as pd
+
 from .ml.loader import ChurnPipeline
 
+
 def get_risk_level(probability: float) -> str:
+    """
+    Convert churn probability into frontend-friendly risk level.
+    """
     if probability < 0.33:
         return "low"
     elif probability < 0.66:
@@ -10,6 +15,10 @@ def get_risk_level(probability: float) -> str:
 
 
 def build_input_dataframe(data: dict) -> pd.DataFrame:
+    """
+    Convert API snake_case input into the original training column names.
+    These names must match the raw dataset columns used before pd.get_dummies().
+    """
     row = {
         "Age": data["age"],
         "Gender": data["gender"],
@@ -22,37 +31,50 @@ def build_input_dataframe(data: dict) -> pd.DataFrame:
         "Total Spend": data["total_spend"],
         "Last Interaction": data["last_interaction"],
     }
+
     return pd.DataFrame([row])
 
 
 def preprocess_input(data: dict) -> pd.DataFrame:
+    """
+    Match the exact preprocessing used during training:
+
+    raw input
+    -> pd.get_dummies()
+    -> reindex to saved training feature columns
+    -> scaler.transform()
+    """
     scaler = ChurnPipeline.get_scaler()
     training_columns = ChurnPipeline.get_features()
 
     df = build_input_dataframe(data)
-    print("raw input df columns:", list(df.columns))
 
+    # Same categorical encoding style as training notebook
     df = pd.get_dummies(df)
-    print("after get_dummies columns:", list(df.columns))
 
+    # Ensure exact same columns and order as training
     df = df.reindex(columns=training_columns, fill_value=0)
-    print("after reindex shape:", df.shape)
 
+    # Scale all columns, same as training
     scaled = scaler.transform(df)
+
     return pd.DataFrame(scaled, columns=training_columns)
 
 
 def predict_churn(data: dict) -> dict:
-    print("predict_churn input:", data)
+    """
+    Run churn prediction using loaded model pipeline.
 
+    Uses custom threshold from pipeline if available.
+    Falls back to 0.4 because this project selected threshold=0.4.
+    """
     model = ChurnPipeline.get_model()
+    threshold = ChurnPipeline.get_threshold()
+
     processed_df = preprocess_input(data)
 
-    print("processed_df columns:", list(processed_df.columns))
-    print("processed_df shape:", processed_df.shape)
-
-    prediction = int(model.predict(processed_df)[0])
     probability = float(model.predict_proba(processed_df)[0][1])
+    prediction = int(probability >= threshold)
 
     return {
         "prediction": prediction,

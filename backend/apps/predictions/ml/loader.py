@@ -2,6 +2,7 @@ import os
 import joblib
 
 from django.conf import settings
+from django.db.utils import OperationalError, ProgrammingError
 from apps.ml_models.models import TrainedModel
 
 
@@ -12,13 +13,16 @@ class ChurnPipeline:
 
     @classmethod
     def load(cls):
-        # 🔹 Try DB active model first
-        active_model = TrainedModel.objects.filter(
-            is_active=True,
-            status="ready"
-        ).first()
+        active_model = None
 
-        # ✅ CASE 1: Active model exists
+        try:
+            active_model = TrainedModel.objects.filter(
+                is_active=True,
+                status="ready"
+            ).first()
+        except (OperationalError, ProgrammingError):
+            active_model = None
+
         if active_model:
             if cls._pipeline is None or cls._active_model_id != active_model.id:
                 cls._pipeline = joblib.load(active_model.model_file.path)
@@ -27,7 +31,6 @@ class ChurnPipeline:
 
             return cls._pipeline
 
-        # ❗ CASE 2: No active model → fallback
         fallback_path = os.path.join(
             settings.BASE_DIR,
             "apps",
@@ -42,7 +45,6 @@ class ChurnPipeline:
                 "No active model found and fallback pipeline is missing."
             )
 
-        # load fallback only once
         if cls._pipeline is None or not cls._fallback_loaded:
             cls._pipeline = joblib.load(fallback_path)
             cls._active_model_id = None
@@ -61,3 +63,15 @@ class ChurnPipeline:
     @classmethod
     def get_features(cls):
         return cls.load()["features"]
+
+    @classmethod
+    def get_threshold(cls):
+        return cls.load().get("threshold", 0.4)
+
+    @classmethod
+    def get_numeric_columns(cls):
+        return cls.load().get("numeric_columns", [])
+
+    @classmethod
+    def get_categorical_columns(cls):
+        return cls.load().get("categorical_columns", [])
