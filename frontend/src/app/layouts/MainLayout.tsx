@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router';
 import {
   LayoutDashboard,
   Users,
@@ -15,6 +15,8 @@ import {
   ChevronDown,
 } from 'lucide-react';
 
+import { logout } from '../../services/authService';
+
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Customers', href: '/customers', icon: Users },
@@ -27,12 +29,20 @@ export function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isActive = (path: string) => {
     if (path === '/') {
       return location.pathname === '/';
     }
     return location.pathname.startsWith(path);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setProfileOpen(false);
+    setSidebarOpen(false);
+    navigate('/login');
   };
 
   return (
@@ -81,6 +91,13 @@ export function MainLayout() {
               <p className="text-sm font-medium text-slate-900 truncate">Admin User</p>
               <p className="text-xs text-slate-500 truncate">admin@company.com</p>
             </div>
+            <button
+              onClick={handleLogout}
+              className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
@@ -128,6 +145,26 @@ export function MainLayout() {
                 );
               })}
             </nav>
+
+            {/* Mobile User Section */}
+            <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-slate-100">
+              <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-all duration-200">
+                <div className="w-8 h-8 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-slate-700" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-900 truncate">Admin User</p>
+                  <p className="text-xs text-slate-500 truncate">admin@company.com</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
+                  title="Sign out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -182,14 +219,14 @@ export function MainLayout() {
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setProfileOpen(false)} />
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg shadow-slate-200/50 border border-slate-200/60 py-1 z-20">
-                    <Link
-                      to="/login"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                      onClick={() => setProfileOpen(false)}
+                    <button
+                      type="button"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
+                      onClick={handleLogout}
                     >
                       <LogOut className="w-4 h-4" />
                       Sign Out
-                    </Link>
+                    </button>
                   </div>
                 </>
               )}

@@ -3,7 +3,10 @@ from django.urls import path, include
 from django.http import JsonResponse
 from django.conf import settings
 from django.conf.urls.static import static
-
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 def home(request):
     return JsonResponse({
@@ -14,6 +17,8 @@ def home(request):
 urlpatterns = [
     path("", home),
     path("admin/", admin.site.urls),
+    path("api/auth/login/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/predictions/", include("apps.predictions.urls")),
     path("api/customers/", include("apps.customers.urls")),
     path("api/dashboard/", include("apps.dashboard.urls")),

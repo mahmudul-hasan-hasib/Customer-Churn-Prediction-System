@@ -9,8 +9,10 @@ import { CustomerDetail } from "./pages/CustomerDetail";
 import { Prediction } from "./pages/Prediction";
 import { Analytics } from "./pages/Analytics";
 import { Admin } from "./pages/Admin";
+import { ProtectedRoute } from "../app/ProtectedRoute";
 
 export const router = createBrowserRouter([
+  // 🔓 PUBLIC ROUTES
   {
     path: "/login",
     Component: Login,
@@ -23,16 +25,23 @@ export const router = createBrowserRouter([
     path: "/forgot-password",
     Component: ForgotPassword,
   },
+
+  // 🔐 PROTECTED ROUTES
   {
-    path: "/",
-    Component: MainLayout,
+    Component: ProtectedRoute,
     children: [
-      { index: true, Component: Dashboard },
-      { path: "customers", Component: CustomerList },
-      { path: "customers/:id", Component: CustomerDetail },
-      { path: "prediction", Component: Prediction },
-      { path: "analytics", Component: Analytics },
-      { path: "admin", Component: Admin },
+      {
+        path: "/",
+        Component: MainLayout,
+        children: [
+          { index: true, Component: Dashboard },
+          { path: "customers", Component: CustomerList },
+          { path: "customers/:id", Component: CustomerDetail },
+          { path: "prediction", Component: Prediction },
+          { path: "analytics", Component: Analytics },
+          { path: "admin", Component: Admin },
+        ],
+      },
     ],
   },
 ]);
