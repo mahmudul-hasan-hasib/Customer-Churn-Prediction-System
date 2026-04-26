@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
 
     # Local apps
+    "apps.caccounts",
     "apps.predictions",
     "apps.customers",
     "apps.dashboard",
